@@ -1,0 +1,2 @@
+SELECT * 
+FROM salesdb.orders;
