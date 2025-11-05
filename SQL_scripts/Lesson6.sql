@@ -72,3 +72,53 @@ FROM customers;
 
 -- turns out EXCEPT and INTERSECT are not supported in MySQL
 
+
+-- Combine all orders into one report wihtout duplicates (orders and orders_archive)
+SELECT *
+FROM orders
+
+UNION 
+
+SELECT *
+FROM orders_archive;
+
+-- Best practice is to query column names not *, to avoid overloading your memory
+-- It's also good practice to put a static column before columns where id s come from
+-- distinct columns but they repeat, this helps yuo distinguish things
+-- take the example below for instance
+
+SELECT
+	'orders' AS SourceTable,
+	`orders`.`orderid`,
+    `orders`.`productid`,
+    `orders`.`customerid`,
+    `orders`.`salespersonid`,
+    `orders`.`orderdate`,
+    `orders`.`shipdate`,
+    `orders`.`orderstatus`,
+    `orders`.`shipaddress`,
+    `orders`.`billaddress`,
+    `orders`.`quantity`,
+    `orders`.`sales`,
+    `orders`.`creationtime`
+FROM `salesdb`.`orders`
+
+UNION 
+
+SELECT 
+	'orders_archive' AS SourceTable,
+	`orders_archive`.`orderid`,
+    `orders_archive`.`productid`,
+    `orders_archive`.`customerid`,
+    `orders_archive`.`salespersonid`,
+    `orders_archive`.`orderdate`,
+    `orders_archive`.`shipdate`,
+    `orders_archive`.`orderstatus`,
+    `orders_archive`.`shipaddress`,
+    `orders_archive`.`billaddress`,
+    `orders_archive`.`quantity`,
+    `orders_archive`.`sales`,
+    `orders_archive`.`creationtime`
+FROM `salesdb`.`orders_archive`;
+
+
