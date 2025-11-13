@@ -355,3 +355,104 @@ SELECT
     sales-MAX(sales) OVER()
 FROM orders;
 
+-- Calculate the moving(running total) average of sales
+-- for each product over time
+
+USE salesdb;
+
+SELECT 
+	orderid,
+    productid,
+    orderdate,
+    AVG(sales) OVER(PARTITION BY productid ORDER BY orderdate), -- this uses unbounded preceding and current row by default
+    AVG(sales) OVER(PARTITION BY productid ORDER BY orderdate ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
+FROM orders;
+
+-- Calculate the moving(running total) average of sales
+-- for each product over time, including only the next order
+
+SELECT 
+	orderid,
+    productid,
+    orderdate,
+    sales,
+    AVG(sales) OVER(PARTITION BY productid ORDER BY orderdate ROWS BETWEEN CURRENT ROW AND 1 FOLLOWING)
+FROM orders;
+
+-- ranking in window functions
+-- percentage or integer based ranking
+-- you alwasy have to order with rank
+-- not allowed to use frames
+
+
+-- row_number() assigns an unique number to each row
+-- it doesnt handle ties
+
+-- rank() handles the ties. equal values will be on the same rank
+-- dense_rank() handles the ties but does not skip ids for instance A(1) A(1) B(2), instead of A(1) A(1) B(3)
+-- rank the orders based on their sales 
+-- from the highest to the lowest
+
+SELECT 
+	orderid,
+    productid,
+    sales,
+    ROW_NUMBER() OVER(ORDER BY sales DESC),
+    RANK() OVER(ORDER BY sales DESC),
+    DENSE_RANK() OVER(ORDER BY sales DESC)
+FROM orders;
+
+-- find the top highest sales for each product
+
+SELECT 
+	*
+FROM(
+SELECT 
+	orderid,
+    productid,
+    sales,
+    ROW_NUMBER() OVER(PARTITION BY productid ORDER BY sales DESC) AS ranking
+FROM orders) t
+WHERE ranking=1;
+
+
+-- find the lowest 2 customers based on their total sales
+SELECT 
+	customerid,
+    total_sales,
+    ranking
+FROM (
+SELECT  
+	customerid,
+    SUM(sales) total_sales,
+    ROW_NUMBER() OVER(ORDER BY SUM(sales)) ranking
+FROM orders
+GROUP BY customerid) t
+WHERE ranking IN (1,2);
+
+
+-- assign unique ids to the rows of the 'Orders Archive' table
+
+SELECT
+*,
+ROW_NUMBER() OVER(ORDER BY orderid, orderdate) unique_id
+FROM orders_archive;
+
+
+-- identify duplicate rows in the table 'orders archive'
+-- and return a clean result without any duplicates
+
+SELECT 
+	*
+FROM
+(
+SELECT 
+	*,
+    RANK() OVER(PARTITION BY orderid ORDER BY creationtime DESC) id
+FROM orders_archive) t
+WHERE id=1;
+
+-- ntile divide the rows into a specified number of approximately
+-- equal groups (buckets)
+
+
